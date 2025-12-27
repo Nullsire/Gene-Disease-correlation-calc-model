@@ -202,18 +202,7 @@ else:
     
     # 加载最佳模型
     model.load_state_dict(best_model_state)
-    model.eval()
-    val_preds = []
-    val_targets = []
-    with torch.no_grad():
-        for (g_id, d_id, feats), targets in val_loader:
-            g_id, d_id, feats, targets = g_id.to(device), d_id.to(device), feats.to(device), targets.to(device)
-            outputs = model(g_id, d_id, feats)
-            val_preds.append(outputs.cpu().numpy())
-            val_targets.append(targets.cpu().numpy())
-    val_preds = np.concatenate(val_preds, axis=0)
-    val_targets = np.concatenate(val_targets, axis=0)
-    val_rmse = np.sqrt(np.mean((val_preds - val_targets) ** 2))
+    val_rmse = best_val_rmse
     print(f"最优模型验证集 RMSE: {val_rmse:.4f}")
     
     # 保存模型
