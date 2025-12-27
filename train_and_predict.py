@@ -7,13 +7,20 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 import numpy as np
+import pickle
 
 # ==========================================
-# 1. 数据加载与缓存
+# 配置
 # ==========================================
 CACHE_PATH = 'training_data_merged.parquet'
 DATA_TYPE_PATH = './data/by_data_type'
 OVERALL_PATH = './data/overall'
+MODEL_PATH = 'best_gene_disease_model.pth'
+ENCODERS_SCALER_PATH = 'encoders_scaler.pkl'
+
+# ==========================================
+# 1. 数据加载与缓存
+# ==========================================
 
 if os.path.exists(CACHE_PATH):
     print(f"检测到缓存文件 {CACHE_PATH}，正在加载...")
@@ -133,19 +140,68 @@ criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.00008)
 epochs = 25
 
-print("\n开始训练...")
-for epoch in range(epochs):
-    model.train()
-    running_loss = 0.0
-    for (g_id, d_id, feats), targets in train_loader:
-        g_id, d_id, feats, targets = g_id.to(device), d_id.to(device), feats.to(device), targets.to(device)
-        optimizer.zero_grad()
-        outputs = model(g_id, d_id, feats)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
-    train_rmse = np.sqrt(running_loss / len(train_loader))
+# 检查是否存在已训练的模型
+if os.path.exists(MODEL_PATH):
+    print(f"检测到已训练模型 {MODEL_PATH}，正在加载...")
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+    print("模型加载完成！")
+    
+    # 加载 encoders 和 scaler
+    if os.path.exists(ENCODERS_SCALER_PATH):
+        print(f"检测到编码器和缩放器 {ENCODERS_SCALER_PATH}，正在加载...")
+        with open(ENCODERS_SCALER_PATH, 'rb') as f:
+            saved_data = pickle.load(f)
+            gene_encoder = saved_data['gene_encoder']
+            disease_encoder = saved_data['disease_encoder']
+            scaler = saved_data['scaler']
+            feature_cols = saved_data['feature_cols']
+            num_genes = saved_data['num_genes']
+            num_diseases = saved_data['num_diseases']
+        print("编码器和缩放器加载完成！")
+    
+    skip_training = True
+else:
+    skip_training = False
+    print("\n开始训练...")
+    best_val_rmse = float('inf')
+    best_model_state = None
+    
+    for epoch in range(epochs):
+        model.train()
+        running_loss = 0.0
+        for (g_id, d_id, feats), targets in train_loader:
+            g_id, d_id, feats, targets = g_id.to(device), d_id.to(device), feats.to(device), targets.to(device)
+            optimizer.zero_grad()
+            outputs = model(g_id, d_id, feats)
+            loss = criterion(outputs, targets)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        train_rmse = np.sqrt(running_loss / len(train_loader))
+        model.eval()
+        val_preds = []
+        val_targets = []
+        with torch.no_grad():
+            for (g_id, d_id, feats), targets in val_loader:
+                g_id, d_id, feats, targets = g_id.to(device), d_id.to(device), feats.to(device), targets.to(device)
+                outputs = model(g_id, d_id, feats)
+                val_preds.append(outputs.cpu().numpy())
+                val_targets.append(targets.cpu().numpy())
+        val_preds = np.concatenate(val_preds, axis=0)
+        val_targets = np.concatenate(val_targets, axis=0)
+        val_rmse = np.sqrt(np.mean((val_preds - val_targets) ** 2))
+        
+        # 保存最佳模型
+        if val_rmse < best_val_rmse:
+            best_val_rmse = val_rmse
+            best_model_state = model.state_dict().copy()
+        
+        print(f"Epoch [{epoch+1}/{epochs}], Train RMSE: {train_rmse:.4f}, Val RMSE: {val_rmse:.4f}")
+    
+    print("训练完成！")
+    
+    # 加载最佳模型
+    model.load_state_dict(best_model_state)
     model.eval()
     val_preds = []
     val_targets = []
@@ -158,9 +214,23 @@ for epoch in range(epochs):
     val_preds = np.concatenate(val_preds, axis=0)
     val_targets = np.concatenate(val_targets, axis=0)
     val_rmse = np.sqrt(np.mean((val_preds - val_targets) ** 2))
-    print(f"Epoch [{epoch+1}/{epochs}], Train RMSE: {train_rmse:.4f}, Val RMSE: {val_rmse:.4f}")
-
-print("训练完成！")
+    print(f"最优模型验证集 RMSE: {val_rmse:.4f}")
+    
+    # 保存模型
+    torch.save(model.state_dict(), MODEL_PATH)
+    print(f"模型已保存至 {MODEL_PATH}")
+    
+    # 保存 encoders 和 scaler
+    with open(ENCODERS_SCALER_PATH, 'wb') as f:
+        pickle.dump({
+            'gene_encoder': gene_encoder,
+            'disease_encoder': disease_encoder,
+            'scaler': scaler,
+            'feature_cols': feature_cols,
+            'num_genes': num_genes,
+            'num_diseases': num_diseases
+        }, f)
+    print(f"编码器和缩放器已保存至 {ENCODERS_SCALER_PATH}")
 
 # ==========================================
 # Baseline: 随机猜测

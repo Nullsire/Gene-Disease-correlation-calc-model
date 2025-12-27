@@ -1,2 +1,6 @@
 data/
 training_data_merged.parquet
+*.pth
+*.pt
+*.pkl
+models/
