@@ -1,0 +1,63 @@
+检测到缓存文件 training_data_merged.parquet，正在加载...
+最终整合数据集形状: (4492971, 11)
+正在预处理数据...
+唯一基因数: 31214, 唯一疾病数: 26329
+使用的证据特征 (8列): ['affected_pathway', 'animal_model', 'genetic_association', 'genetic_literature', 'known_drug', 'literature', 'rna_expression', 'somatic_mutation']
+使用设备: cuda
+
+开始训练...
+Epoch [1/25], Train RMSE: 0.1385, Val RMSE: 0.0917
+Epoch [2/25], Train RMSE: 0.0604, Val RMSE: 0.0208
+Epoch [3/25], Train RMSE: 0.0238, Val RMSE: 0.0162
+Epoch [4/25], Train RMSE: 0.0202, Val RMSE: 0.0144
+Epoch [5/25], Train RMSE: 0.0179, Val RMSE: 0.0128
+Epoch [6/25], Train RMSE: 0.0161, Val RMSE: 0.0117
+Epoch [7/25], Train RMSE: 0.0149, Val RMSE: 0.0106
+Epoch [8/25], Train RMSE: 0.0140, Val RMSE: 0.0100
+Epoch [9/25], Train RMSE: 0.0134, Val RMSE: 0.0108
+Epoch [10/25], Train RMSE: 0.0129, Val RMSE: 0.0095
+Epoch [11/25], Train RMSE: 0.0125, Val RMSE: 0.0096
+Epoch [12/25], Train RMSE: 0.0121, Val RMSE: 0.0087
+Epoch [13/25], Train RMSE: 0.0118, Val RMSE: 0.0085
+Epoch [14/25], Train RMSE: 0.0116, Val RMSE: 0.0084
+Epoch [15/25], Train RMSE: 0.0114, Val RMSE: 0.0083
+Epoch [16/25], Train RMSE: 0.0112, Val RMSE: 0.0081
+Epoch [17/25], Train RMSE: 0.0111, Val RMSE: 0.0080
+Epoch [18/25], Train RMSE: 0.0109, Val RMSE: 0.0080
+Epoch [19/25], Train RMSE: 0.0107, Val RMSE: 0.0083
+Epoch [20/25], Train RMSE: 0.0106, Val RMSE: 0.0079
+Epoch [21/25], Train RMSE: 0.0104, Val RMSE: 0.0084
+Epoch [22/25], Train RMSE: 0.0104, Val RMSE: 0.0086
+Epoch [23/25], Train RMSE: 0.0102, Val RMSE: 0.0087
+Epoch [24/25], Train RMSE: 0.0101, Val RMSE: 0.0075
+Epoch [25/25], Train RMSE: 0.0100, Val RMSE: 0.0077
+训练完成！
+最优模型验证集 RMSE: 0.0075
+模型已保存至 best_gene_disease_model.pth
+编码器和缩放器已保存至 encoders_scaler.pkl
+Baseline 随机猜测 RMSE: 0.5348
+模型 RMSE: 0.0075
+模型优于随机猜测！
+
+正在为 EFO_0000305 预测 Top 基因...
+              Gene_ID  Predicted_Score
+839   ENSG00000091831         0.824326
+3282  ENSG00000139618         0.796626
+696   ENSG00000083093         0.770387
+5936  ENSG00000183765         0.757324
+413   ENSG00000066468         0.727584
+3051  ENSG00000136492         0.713268
+3799  ENSG00000149311         0.674643
+3402  ENSG00000141736         0.651990
+2972  ENSG00000135446         0.645683
+3386  ENSG00000141510         0.640406
+5261  ENSG00000171862         0.613351
+2195  ENSG00000121879         0.609930
+5650  ENSG00000178568         0.599728
+117   ENSG00000012048         0.592941
+3664  ENSG00000146648         0.572853
+2947  ENSG00000135111         0.565068
+352   ENSG00000062822         0.548281
+1258  ENSG00000104833         0.545568
+5577  ENSG00000177084         0.543369
+3164  ENSG00000137869         0.541656
